@@ -1,0 +1,24 @@
+{
+  "name": "multi-tenant-saas-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Amit-64/multi-tenant-saas-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Amit-64/multi-tenant-saas-backend/issues"
+  },
+  "homepage": "https://github.com/Amit-64/multi-tenant-saas-backend#readme",
+  "dependencies": {
+    "express": "^4.22.3"
+  }
+}
