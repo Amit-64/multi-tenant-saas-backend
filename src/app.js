@@ -1,6 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const env = require('./config/env');
+const customerRoutes = require('./routes/customer.route');
 const {notFoundHandler , errorHandler} = require('./middleware/errorHandler');
 const app = express();
 
@@ -19,6 +20,7 @@ app.get('/api/v1/health',(req,res)=>{
         uptime : process.uptime()
     });
 });
+app.use('/api/v1/customers',customerRoutes);
 
 app.use(notFoundHandler);
 
