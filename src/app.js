@@ -1,6 +1,7 @@
 const express = require('express');
 const morgan = require('morgan');
 const env = require('./config/env');
+const {notFoundHandler , errorHandler} = require('./middleware/errorHandler');
 const app = express();
 
 app.use(express.json());
@@ -19,5 +20,8 @@ app.get('/api/v1/health',(req,res)=>{
     });
 });
 
+app.use(notFoundHandler);
+
+app.use(errorHandler);
 
 module.exports =app;
