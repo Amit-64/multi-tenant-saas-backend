@@ -1,77 +1,70 @@
-const crypto = require('crypto');
 const AppError = require('../utils/AppError');
+const customerRepository = require('../repositories/customer.repository');
 
-const customers = [];
 
-const getAllCustomers = () => {
-  return customers;
+const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
+
+const getAllCustomers = async (tenantId = DEFAULT_TENANT_ID) => {
+  return await customerRepository.findAllByTenant(tenantId);
 };
 
-const getCustomerById = (id) => {
-  const customer = customers.find((item) => item.id === id);
+const getCustomerById = async (id, tenantId = DEFAULT_TENANT_ID) => {
+  const customer = await customerRepository.findByIdAndTenant(id, tenantId);
   if (!customer) {
     throw new AppError('Customer not found', 404);
   }
   return customer;
 };
 
-const createCustomer = ({ name, email, phone, nationalId }) => {
-  const existingCustomer = customers.find(
-    (item) => item.email.toLowerCase() === email.toLowerCase()
+const createCustomer = async (
+  { name, email, phone, nationalId },
+  tenantId = DEFAULT_TENANT_ID
+) => {
+  const existingCustomer = await customerRepository.findByEmailAndTenant(
+    email,
+    tenantId
   );
 
   if (existingCustomer) {
     throw new AppError('Customer with this email already exists', 409);
   }
 
-  const newCustomer = {
-    id: crypto.randomUUID(),
+  return await customerRepository.create({
+    tenantId,
     name,
-    email: email.toLowerCase(),
+    email,
     phone,
     nationalId,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  customers.push(newCustomer);
-  return newCustomer;
+  });
 };
 
-const updateCustomer = (id, updates) => {
-  const index = customers.findIndex((item) => item.id === id);
-  if (index === -1) {
+const updateCustomer = async (id, updates, tenantId = DEFAULT_TENANT_ID) => {
+  const existingCustomer = await customerRepository.findByIdAndTenant(
+    id,
+    tenantId
+  );
+  if (!existingCustomer) {
     throw new AppError('Customer not found', 404);
   }
 
   if (updates.email) {
-    const emailTaken = customers.find(
-      (item) =>
-        item.email.toLowerCase() === updates.email.toLowerCase() &&
-        item.id !== id
+    const emailOwner = await customerRepository.findByEmailAndTenant(
+      updates.email,
+      tenantId
     );
-    if (emailTaken) {
+    if (emailOwner && emailOwner.id !== id) {
       throw new AppError('Customer with this email already exists', 409);
     }
-    updates.email = updates.email.toLowerCase();
   }
 
-  customers[index] = {
-    ...customers[index],
-    ...updates,
-    updatedAt: new Date().toISOString(),
-  };
-
-  return customers[index];
+  return await customerRepository.updateByIdAndTenant(id, tenantId, updates);
 };
 
-const deleteCustomer = (id) => {
-  const index = customers.findIndex((item) => item.id === id);
-  if (index === -1) {
+const deleteCustomer = async (id, tenantId = DEFAULT_TENANT_ID) => {
+  const deleted = await customerRepository.deleteByIdAndTenant(id, tenantId);
+  if (!deleted) {
     throw new AppError('Customer not found', 404);
   }
-
-  customers.splice(index, 1);
 };
 
 module.exports = {

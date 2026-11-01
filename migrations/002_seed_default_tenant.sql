@@ -1,0 +1,3 @@
+INSERT INTO tenants (id, name, status)
+VALUES ('00000000-0000-0000-0000-000000000001', 'Default Sandbox Bank', 'ACTIVE')
+ON CONFLICT (id) DO NOTHING;
