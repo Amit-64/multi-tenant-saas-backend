@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/Amit-64/multi-tenant-saas-backend#readme",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "dotenv": "^18.0.9",
     "express": "^4.22.3",
     "joi": "^18.3.1",

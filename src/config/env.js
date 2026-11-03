@@ -13,6 +13,7 @@ const env = {
     password: process.env.DB_PASSWORD || '',
     max: parseInt(process.env.DB_POOL_MAX, 10) || 20,
   },
+    bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10,
 };
 
 module.exports = env;
