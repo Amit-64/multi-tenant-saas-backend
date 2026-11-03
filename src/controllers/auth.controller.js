@@ -25,8 +25,21 @@ const login = async (req, res, next) => {
     next(err);
   }
 };
+const getMe = async (req, res, next) => {
+  try {
+    res.status(200).json({
+      success: true,
+      data: {
+        user: req.user,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
 module.exports = {
   register,
   login,
+  getMe
 };

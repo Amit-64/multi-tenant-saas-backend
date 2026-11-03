@@ -1,14 +1,11 @@
 const AppError = require('../utils/AppError');
 const customerRepository = require('../repositories/customer.repository');
 
-
-const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000001';
-
-const getAllCustomers = async (tenantId = DEFAULT_TENANT_ID) => {
+const getAllCustomers = async (tenantId) => {
   return await customerRepository.findAllByTenant(tenantId);
 };
 
-const getCustomerById = async (id, tenantId = DEFAULT_TENANT_ID) => {
+const getCustomerById = async (id, tenantId) => {
   const customer = await customerRepository.findByIdAndTenant(id, tenantId);
   if (!customer) {
     throw new AppError('Customer not found', 404);
@@ -16,10 +13,7 @@ const getCustomerById = async (id, tenantId = DEFAULT_TENANT_ID) => {
   return customer;
 };
 
-const createCustomer = async (
-  { name, email, phone, nationalId },
-  tenantId = DEFAULT_TENANT_ID
-) => {
+const createCustomer = async ({ name, email, phone, nationalId }, tenantId) => {
   const existingCustomer = await customerRepository.findByEmailAndTenant(
     email,
     tenantId
@@ -38,7 +32,7 @@ const createCustomer = async (
   });
 };
 
-const updateCustomer = async (id, updates, tenantId = DEFAULT_TENANT_ID) => {
+const updateCustomer = async (id, updates, tenantId) => {
   const existingCustomer = await customerRepository.findByIdAndTenant(
     id,
     tenantId
@@ -60,7 +54,7 @@ const updateCustomer = async (id, updates, tenantId = DEFAULT_TENANT_ID) => {
   return await customerRepository.updateByIdAndTenant(id, tenantId, updates);
 };
 
-const deleteCustomer = async (id, tenantId = DEFAULT_TENANT_ID) => {
+const deleteCustomer = async (id, tenantId) => {
   const deleted = await customerRepository.deleteByIdAndTenant(id, tenantId);
   if (!deleted) {
     throw new AppError('Customer not found', 404);

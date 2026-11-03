@@ -2,7 +2,7 @@ const customerService = require('../services/customer.service');
 
 const getAllCustomers = async (req, res, next) => {
   try {
-    const data = await customerService.getAllCustomers();
+    const data = await customerService.getAllCustomers(req.user.tenantId);
     res.status(200).json({
       success: true,
       count: data.length,
@@ -15,7 +15,10 @@ const getAllCustomers = async (req, res, next) => {
 
 const getCustomerById = async (req, res, next) => {
   try {
-    const customer = await customerService.getCustomerById(req.params.id);
+    const customer = await customerService.getCustomerById(
+      req.params.id,
+      req.user.tenantId
+    );
     res.status(200).json({
       success: true,
       data: customer,
@@ -27,7 +30,10 @@ const getCustomerById = async (req, res, next) => {
 
 const createCustomer = async (req, res, next) => {
   try {
-    const customer = await customerService.createCustomer(req.body);
+    const customer = await customerService.createCustomer(
+      req.body,
+      req.user.tenantId
+    );
     res.status(201).json({
       success: true,
       data: customer,
@@ -41,7 +47,8 @@ const updateCustomer = async (req, res, next) => {
   try {
     const customer = await customerService.updateCustomer(
       req.params.id,
-      req.body
+      req.body,
+      req.user.tenantId
     );
     res.status(200).json({
       success: true,
@@ -54,7 +61,7 @@ const updateCustomer = async (req, res, next) => {
 
 const deleteCustomer = async (req, res, next) => {
   try {
-    await customerService.deleteCustomer(req.params.id);
+    await customerService.deleteCustomer(req.params.id, req.user.tenantId);
     res.status(200).json({
       success: true,
       message: 'Customer deleted successfully',
