@@ -14,6 +14,10 @@ const env = {
     max: parseInt(process.env.DB_POOL_MAX, 10) || 20,
   },
     bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10,
+    jwt: {
+        accessSecret: process.env.JWT_ACCESS_SECRET || 'dev_access_secret_key',
+        accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+      },
 };
 
 module.exports = env;
