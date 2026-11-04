@@ -7,5 +7,6 @@ const { registerSchema, loginSchema,refreshTokenSchema } = require("../utils/aut
 const router = express.Router();router.post('/refresh', validate(refreshTokenSchema), authController.refresh);
 router.post("/register", validate(registerSchema), authController.register);
 router.post("/login", validate(loginSchema), authController.login);
+router.post('/logout', authenticate, validate(refreshTokenSchema), authController.logout);
 router.get("/me", authenticate, authController.getMe);
 module.exports = router;

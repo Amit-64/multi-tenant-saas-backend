@@ -58,6 +58,16 @@ const login = async ({ tenantId, email, password }) => {
     },
   };
 };
+const logout = async ({ refreshToken }) => {
+  const tokenHash = hashToken(refreshToken);
+  const storedToken = await authRepository.findRefreshTokenByHash(tokenHash);
+
+  if (storedToken && !storedToken.revokedAt) {
+    await authRepository.revokeRefreshTokenById(storedToken.id);
+  }
+
+  return { message: 'Logged out successfully' };
+};
 
 const refresh = async ({ refreshToken }) => {
   const incomingTokenHash = hashToken(refreshToken);
@@ -118,5 +128,6 @@ const refresh = async ({ refreshToken }) => {
 module.exports = {
   registerTenantAdmin,
   login,
+  logout,
   refresh,
 };

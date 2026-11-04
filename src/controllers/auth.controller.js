@@ -25,6 +25,17 @@ const login = async (req, res, next) => {
     next(err);
   }
 };
+const logout = async (req, res, next) => {
+  try {
+    const data = await authService.logout(req.body);
+    res.status(200).json({
+      success: true,
+      ...data,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 const refresh = async (req, res, next) => {
   try {
     const data = await authService.refresh(req.body);
@@ -53,6 +64,7 @@ const getMe = async (req, res, next) => {
 module.exports = {
   register,
   login,
+  logout,
   refresh,
   getMe
 };
