@@ -17,6 +17,7 @@ const env = {
     jwt: {
         accessSecret: process.env.JWT_ACCESS_SECRET || 'dev_access_secret_key',
         accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+        refreshExpiresDays: parseInt(process.env.REFRESH_TOKEN_EXPIRES_DAYS, 10) || 7,
       },
 };
 
