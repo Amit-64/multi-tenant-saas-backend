@@ -1,7 +1,8 @@
-const AppError = require('../utils/AppError');
-const authRepository = require('../repositories/auth.repository');
-const { hashPassword, comparePassword } = require('../utils/password');
-const { generateAccessToken } = require('../utils/jwt');
+const AppError = require("../utils/AppError");
+const authRepository = require("../repositories/auth.repository");
+const { hashPassword, comparePassword } = require("../utils/password");
+const { generateAccessToken } = require("../utils/jwt");
+const { generateRefreshToken } = require("../utils/token");
 
 const registerTenantAdmin = async ({ tenantName, email, password }) => {
   const passwordHash = await hashPassword(password);
@@ -19,16 +20,16 @@ const login = async ({ tenantId, email, password }) => {
   const user = await authRepository.findUserByEmailAndTenant(email, tenantId);
 
   if (!user) {
-    throw new AppError('Invalid credentials', 401);
+    throw new AppError("Invalid credentials", 401);
   }
 
-  if (user.status !== 'ACTIVE') {
-    throw new AppError('User account is not active', 403);
+  if (user.status !== "ACTIVE") {
+    throw new AppError("User account is not active", 403);
   }
 
   const isPasswordValid = await comparePassword(password, user.passwordHash);
   if (!isPasswordValid) {
-    throw new AppError('Invalid credentials', 401);
+    throw new AppError("Invalid credentials", 401);
   }
 
   const accessToken = generateAccessToken({
@@ -37,8 +38,21 @@ const login = async ({ tenantId, email, password }) => {
     roles: user.roles,
   });
 
+  const {
+    rawToken: refreshToken,
+    tokenHash,
+    expiresAt,
+  } = generateRefreshToken();
+
+  await authRepository.saveRefreshToken({
+    userId: user.id,
+    tokenHash,
+    expiresAt,
+  });
+
   return {
     accessToken,
+    refreshToken,
     user: {
       id: user.id,
       tenantId: user.tenantId,

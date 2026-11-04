@@ -6,6 +6,7 @@ const createTenantWithAdmin = async ({ tenantName, email, passwordHash }) => {
   try {
     await client.query('BEGIN');
 
+   
     const tenantQuery = `
       INSERT INTO tenants (name, status)
       VALUES ($1, 'ACTIVE')
@@ -14,7 +15,7 @@ const createTenantWithAdmin = async ({ tenantName, email, passwordHash }) => {
     const { rows: tenantRows } = await client.query(tenantQuery, [tenantName]);
     const tenant = tenantRows[0];
 
-    
+
     const rolesQuery = `
       INSERT INTO roles (tenant_id, name, description)
       VALUES
@@ -26,6 +27,7 @@ const createTenantWithAdmin = async ({ tenantName, email, passwordHash }) => {
     const { rows: roleRows } = await client.query(rolesQuery, [tenant.id]);
     const adminRole = roleRows.find((role) => role.name === 'ADMIN');
 
+    
     const userQuery = `
       INSERT INTO users (tenant_id, email, password_hash, status)
       VALUES ($1, $2, $3, 'ACTIVE')
@@ -79,7 +81,75 @@ const findUserByEmailAndTenant = async (email, tenantId) => {
   return rows[0] || null;
 };
 
+const findUserById = async (userId) => {
+  const query = `
+    SELECT u.id,
+           u.tenant_id AS "tenantId",
+           u.email,
+           u.status,
+           COALESCE(ARRAY_AGG(r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles
+    FROM users u
+    LEFT JOIN user_roles ur ON u.id = ur.user_id
+    LEFT JOIN roles r ON ur.role_id = r.id
+    WHERE u.id = $1
+    GROUP BY u.id
+  `;
+  const { rows } = await db.query(query, [userId]);
+  return rows[0] || null;
+};
+
+const saveRefreshToken = async ({ userId, tokenHash, expiresAt }) => {
+  const query = `
+    INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
+    VALUES ($1, $2, $3)
+    RETURNING id, user_id AS "userId", expires_at AS "expiresAt", created_at AS "createdAt"
+  `;
+  const { rows } = await db.query(query, [userId, tokenHash, expiresAt]);
+  return rows[0];
+};
+
+const findRefreshTokenByHash = async (tokenHash) => {
+  const query = `
+    SELECT id,
+           user_id AS "userId",
+           token_hash AS "tokenHash",
+           expires_at AS "expiresAt",
+           revoked_at AS "revokedAt",
+           created_at AS "createdAt"
+    FROM refresh_tokens
+    WHERE token_hash = $1
+  `;
+  const { rows } = await db.query(query, [tokenHash]);
+  return rows[0] || null;
+};
+
+const revokeRefreshTokenById = async (id) => {
+  const query = `
+    UPDATE refresh_tokens
+    SET revoked_at = NOW()
+    WHERE id = $1 AND revoked_at IS NULL
+    RETURNING id
+  `;
+  const { rowCount } = await db.query(query, [id]);
+  return rowCount > 0;
+};
+
+const revokeAllUserRefreshTokens = async (userId) => {
+  const query = `
+    UPDATE refresh_tokens
+    SET revoked_at = NOW()
+    WHERE user_id = $1 AND revoked_at IS NULL
+  `;
+  const { rowCount } = await db.query(query, [userId]);
+  return rowCount;
+};
+
 module.exports = {
   createTenantWithAdmin,
   findUserByEmailAndTenant,
+  findUserById,
+  saveRefreshToken,
+  findRefreshTokenByHash,
+  revokeRefreshTokenById,
+  revokeAllUserRefreshTokens,
 };
