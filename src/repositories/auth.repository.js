@@ -6,7 +6,7 @@ const createTenantWithAdmin = async ({ tenantName, email, passwordHash }) => {
   try {
     await client.query('BEGIN');
 
-   
+ 
     const tenantQuery = `
       INSERT INTO tenants (name, status)
       VALUES ($1, 'ACTIVE')
@@ -27,7 +27,22 @@ const createTenantWithAdmin = async ({ tenantName, email, passwordHash }) => {
     const { rows: roleRows } = await client.query(rolesQuery, [tenant.id]);
     const adminRole = roleRows.find((role) => role.name === 'ADMIN');
 
-    
+
+    const mapPermissionsQuery = `
+      INSERT INTO role_permissions (role_id, permission_id)
+      SELECT r.id, p.id
+      FROM roles r
+      CROSS JOIN permissions p
+      WHERE r.tenant_id = $1
+        AND (
+          (r.name = 'ADMIN')
+          OR (r.name = 'MANAGER' AND p.slug IN ('customers:read', 'customers:create', 'customers:update'))
+          OR (r.name = 'VIEWER' AND p.slug IN ('customers:read'))
+        )
+      ON CONFLICT DO NOTHING
+    `;
+    await client.query(mapPermissionsQuery, [tenant.id]);
+
     const userQuery = `
       INSERT INTO users (tenant_id, email, password_hash, status)
       VALUES ($1, $2, $3, 'ACTIVE')
@@ -39,6 +54,7 @@ const createTenantWithAdmin = async ({ tenantName, email, passwordHash }) => {
       passwordHash,
     ]);
     const user = userRows[0];
+
 
     const userRoleQuery = `
       INSERT INTO user_roles (user_id, role_id)
@@ -70,10 +86,13 @@ const findUserByEmailAndTenant = async (email, tenantId) => {
            u.email,
            u.password_hash AS "passwordHash",
            u.status,
-           COALESCE(ARRAY_AGG(r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles
+           COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles,
+           COALESCE(ARRAY_AGG(DISTINCT p.slug) FILTER (WHERE p.slug IS NOT NULL), '{}') AS permissions
     FROM users u
     LEFT JOIN user_roles ur ON u.id = ur.user_id
     LEFT JOIN roles r ON ur.role_id = r.id
+    LEFT JOIN role_permissions rp ON r.id = rp.role_id
+    LEFT JOIN permissions p ON rp.permission_id = p.id
     WHERE LOWER(u.email) = LOWER($1) AND u.tenant_id = $2
     GROUP BY u.id
   `;
@@ -87,10 +106,13 @@ const findUserById = async (userId) => {
            u.tenant_id AS "tenantId",
            u.email,
            u.status,
-           COALESCE(ARRAY_AGG(r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles
+           COALESCE(ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.name IS NOT NULL), '{}') AS roles,
+           COALESCE(ARRAY_AGG(DISTINCT p.slug) FILTER (WHERE p.slug IS NOT NULL), '{}') AS permissions
     FROM users u
     LEFT JOIN user_roles ur ON u.id = ur.user_id
     LEFT JOIN roles r ON ur.role_id = r.id
+    LEFT JOIN role_permissions rp ON r.id = rp.role_id
+    LEFT JOIN permissions p ON rp.permission_id = p.id
     WHERE u.id = $1
     GROUP BY u.id
   `;
