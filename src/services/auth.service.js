@@ -36,6 +36,7 @@ const login = async ({ tenantId, email, password }) => {
     userId: user.id,
     tenantId: user.tenantId,
     roles: user.roles,
+    permissions: user.permissions,
   });
 
   const { rawToken: refreshToken, tokenHash, expiresAt } = generateRefreshToken();
@@ -55,18 +56,9 @@ const login = async ({ tenantId, email, password }) => {
       email: user.email,
       status: user.status,
       roles: user.roles,
+      permissions: user.permissions,
     },
   };
-};
-const logout = async ({ refreshToken }) => {
-  const tokenHash = hashToken(refreshToken);
-  const storedToken = await authRepository.findRefreshTokenByHash(tokenHash);
-
-  if (storedToken && !storedToken.revokedAt) {
-    await authRepository.revokeRefreshTokenById(storedToken.id);
-  }
-
-  return { message: 'Logged out successfully' };
 };
 
 const refresh = async ({ refreshToken }) => {
@@ -79,7 +71,6 @@ const refresh = async ({ refreshToken }) => {
     throw new AppError('Invalid refresh token', 401);
   }
 
-  
   if (storedToken.revokedAt) {
     await authRepository.revokeAllUserRefreshTokens(storedToken.userId);
     throw new AppError(
@@ -100,11 +91,11 @@ const refresh = async ({ refreshToken }) => {
 
   await authRepository.revokeRefreshTokenById(storedToken.id);
 
-
   const newAccessToken = generateAccessToken({
     userId: user.id,
     tenantId: user.tenantId,
     roles: user.roles,
+    permissions: user.permissions,
   });
 
   const {
@@ -125,9 +116,20 @@ const refresh = async ({ refreshToken }) => {
   };
 };
 
+const logout = async ({ refreshToken }) => {
+  const tokenHash = hashToken(refreshToken);
+  const storedToken = await authRepository.findRefreshTokenByHash(tokenHash);
+
+  if (storedToken && !storedToken.revokedAt) {
+    await authRepository.revokeRefreshTokenById(storedToken.id);
+  }
+
+  return { message: 'Logged out successfully' };
+};
+
 module.exports = {
   registerTenantAdmin,
   login,
-  logout,
   refresh,
+  logout,
 };

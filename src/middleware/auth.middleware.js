@@ -21,6 +21,7 @@ const authenticate = (req, res, next) => {
       userId: decoded.sub,
       tenantId: decoded.tenantId,
       roles: decoded.roles || [],
+      permissions : decoded.permissions || [],
     };
 
     next();
