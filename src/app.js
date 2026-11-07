@@ -2,6 +2,7 @@ const express = require("express");
 const morgan = require("morgan");
 const env = require("./config/env");
 const customerRoutes = require("./routes/customer.routes");
+const auditRoutes =require('./routes/audit.routes');
 const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
 const userRoutes = require('./routes/user.routes');
 const authRoutes = require("./routes/auth.routes");
@@ -25,6 +26,7 @@ app.get("/api/v1/health", (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/users' , userRoutes);
 app.use('/api/v1/customers', customerRoutes);
+app.use('/api/v1/audit-logs', auditRoutes);
 
 app.use(notFoundHandler);
 

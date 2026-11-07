@@ -3,6 +3,20 @@ const db = require('../config/db');
 
 const GENESIS_HASH = '0'.repeat(64);
 
+const canonicalizeJson = (value) => {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map(canonicalizeJson).join(',')}]`;
+  }
+  const sortedKeys = Object.keys(value).sort();
+  const keyValuePairs = sortedKeys.map(
+    (key) => `${JSON.stringify(key)}:${canonicalizeJson(value[key])}`
+  );
+  return `{${keyValuePairs.join(',')}}`;
+};
+
 const computeAuditHash = ({
   tenantId,
   actorId,
@@ -12,7 +26,7 @@ const computeAuditHash = ({
   payload,
   prevHash,
 }) => {
-  const serializedPayload = JSON.stringify(payload || {});
+  const serializedPayload = canonicalizeJson(payload || {});
   const dataToHash = `${tenantId}|${actorId || 'SYSTEM'}|${action}|${resource}|${resourceId || 'NONE'}|${serializedPayload}|${prevHash}`;
   return crypto.createHash('sha256').update(dataToHash).digest('hex');
 };
@@ -31,7 +45,6 @@ const createAuditLog = async ({
   try {
     await client.query('BEGIN');
 
-
     const prevQuery = `
       SELECT curr_hash AS "currHash"
       FROM audit_logs
@@ -43,7 +56,6 @@ const createAuditLog = async ({
     const { rows: prevRows } = await client.query(prevQuery, [tenantId]);
     const prevHash = prevRows[0] ? prevRows[0].currHash : GENESIS_HASH;
 
-   
     const currHash = computeAuditHash({
       tenantId,
       actorId,
@@ -53,7 +65,6 @@ const createAuditLog = async ({
       payload,
       prevHash,
     });
-
 
     const insertQuery = `
       INSERT INTO audit_logs (
@@ -141,31 +152,32 @@ const findAllByTenant = async ({
   ]);
   return rows;
 };
+
 const findAllByTenantChronological = async (tenantId) => {
-    const query = `
-      SELECT id,
-             tenant_id AS "tenantId",
-             actor_id AS "actorId",
-             action,
-             resource,
-             resource_id AS "resourceId",
-             payload,
-             ip_address AS "ipAddress",
-             prev_hash AS "prevHash",
-             curr_hash AS "currHash",
-             created_at AS "createdAt"
-      FROM audit_logs
-      WHERE tenant_id = $1
-      ORDER BY created_at ASC, id ASC
-    `;
-    const { rows } = await db.query(query, [tenantId]);
-    return rows;
-  };
-  
-  module.exports = {
-    GENESIS_HASH,
-    computeAuditHash,
-    createAuditLog,
-    findAllByTenant,
-    findAllByTenantChronological,
-  };
+  const query = `
+    SELECT id,
+           tenant_id AS "tenantId",
+           actor_id AS "actorId",
+           action,
+           resource,
+           resource_id AS "resourceId",
+           payload,
+           ip_address AS "ipAddress",
+           prev_hash AS "prevHash",
+           curr_hash AS "currHash",
+           created_at AS "createdAt"
+    FROM audit_logs
+    WHERE tenant_id = $1
+    ORDER BY created_at ASC, id ASC
+  `;
+  const { rows } = await db.query(query, [tenantId]);
+  return rows;
+};
+
+module.exports = {
+  GENESIS_HASH,
+  computeAuditHash,
+  createAuditLog,
+  findAllByTenant,
+  findAllByTenantChronological,
+};
