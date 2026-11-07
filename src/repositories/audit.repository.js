@@ -141,10 +141,31 @@ const findAllByTenant = async ({
   ]);
   return rows;
 };
-
-module.exports = {
-  GENESIS_HASH,
-  computeAuditHash,
-  createAuditLog,
-  findAllByTenant,
-};
+const findAllByTenantChronological = async (tenantId) => {
+    const query = `
+      SELECT id,
+             tenant_id AS "tenantId",
+             actor_id AS "actorId",
+             action,
+             resource,
+             resource_id AS "resourceId",
+             payload,
+             ip_address AS "ipAddress",
+             prev_hash AS "prevHash",
+             curr_hash AS "currHash",
+             created_at AS "createdAt"
+      FROM audit_logs
+      WHERE tenant_id = $1
+      ORDER BY created_at ASC, id ASC
+    `;
+    const { rows } = await db.query(query, [tenantId]);
+    return rows;
+  };
+  
+  module.exports = {
+    GENESIS_HASH,
+    computeAuditHash,
+    createAuditLog,
+    findAllByTenant,
+    findAllByTenantChronological,
+  };
