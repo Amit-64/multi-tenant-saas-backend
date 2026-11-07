@@ -1,7 +1,7 @@
 const express = require("express");
 const morgan = require("morgan");
 const env = require("./config/env");
-const customerRoutes = require("./routes/customer.route");
+const customerRoutes = require("./routes/customer.routes");
 const { notFoundHandler, errorHandler } = require("./middleware/errorHandler");
 const authRoutes = require("./routes/auth.routes");
 const app = express();
