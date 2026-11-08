@@ -123,6 +123,3 @@ The integration tests cover tenant onboarding, token replay detection, RBAC enfo
 
 ---
 
-## License
-
-MIT (or update to your preferred license)
