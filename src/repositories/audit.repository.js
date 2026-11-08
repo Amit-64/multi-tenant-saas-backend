@@ -4,18 +4,20 @@ const db = require('../config/db');
 const GENESIS_HASH = '0'.repeat(64);
 
 const canonicalizeJson = (value) => {
-  if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return `[${value.map(canonicalizeJson).join(',')}]`;
-  }
-  const sortedKeys = Object.keys(value).sort();
-  const keyValuePairs = sortedKeys.map(
-    (key) => `${JSON.stringify(key)}:${canonicalizeJson(value[key])}`
-  );
-  return `{${keyValuePairs.join(',')}}`;
-};
+    if (value === null || typeof value !== 'object') {
+      return JSON.stringify(value);
+    }
+    if (Array.isArray(value)) {
+      return `[${value.map(canonicalizeJson).join(',')}]`;
+    }
+    const sortedKeys = Object.keys(value)
+      .filter((key) => value[key] !== undefined)
+      .sort();
+    const keyValuePairs = sortedKeys.map(
+      (key) => `${JSON.stringify(key)}:${canonicalizeJson(value[key])}`
+    );
+    return `{${keyValuePairs.join(',')}}`;
+  };
 
 const computeAuditHash = ({
   tenantId,
