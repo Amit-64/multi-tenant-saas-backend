@@ -1,4 +1,4 @@
-# Multi-Tenant Enterprise B2B SaaS Backend
+# Multi-Tenant Enterprise SaaS Backend
 
 A multi-tenant REST API built with **Node.js, Express, and PostgreSQL**, designed around the security needs of financial and enterprise SaaS workloads: **granular RBAC**, **refresh token rotation with reuse detection**, **cross-tenant (BOLA/IDOR) isolation**, and **SHA-256 hash-chained compliance audit logs**.
 
