@@ -77,7 +77,12 @@ const swaggerDocument = {
                   type: 'object',
                   required: ['tenantId', 'email', 'password'],
                   properties: {
-                    tenantId: { type: 'string', format: 'uuid', example: '823c95cf-247d-42b4-8776-90353f2477d0' },
+                    tenantId: {
+                      type: 'string',
+                      format: 'uuid',
+                      description: 'Copy the tenant.id UUID returned by POST /auth/register',
+                      example: '00000000-0000-0000-0000-000000000000',
+                    },
                     email: { type: 'string', format: 'email', example: 'admin@acmefintech.com' },
                     password: { type: 'string', example: 'StrongPassword123!' },
                   },
@@ -92,6 +97,7 @@ const swaggerDocument = {
           },
         },
       },
+  
       '/auth/refresh': {
         post: {
           tags: ['Auth'],
